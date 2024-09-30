@@ -6,13 +6,13 @@ from google.oauth2.credentials import Credentials
 SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
 
 # Carregar credenciais do arquivo token.json
-creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+creds = Credentials.from_authorized_user_file('cv-analyzer/analyze/drive/token.json', SCOPES)
 
 # Construa o serviço da API Google Drive
 service = build('drive', 'v3', credentials=creds)
 
 # ID da pasta que você deseja listar os arquivos
-folder_id = '1flYfkoDOelDkKuRYrOOtJUTq0hAKsyo1'
+folder_id = '1bnvaXQq7s1gJyh4w-b6QnW4fT-C6mIzK'
 
 # Listar arquivos na pasta especificada pelo folder_id
 results = service.files().list(
@@ -31,7 +31,7 @@ else:
 
         # Download de cada arquivo no drive
         request = service.files().get_media(fileId=file['id'])
-        file_path = f"./curriculos/{file['name']}"  # Define o caminho de onde salvar o arquivo
+        file_path = f"cv-analyzer/analyze/drive/curriculos/{file['name']}"  # Define o caminho de onde salvar o arquivo
         with open(file_path, 'wb') as f:
             downloader = MediaIoBaseDownload(f, request)
             done = False

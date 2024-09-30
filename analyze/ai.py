@@ -1,6 +1,7 @@
 import re
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
+import json  # Importando json para manipulação de dados
 
 # Carregar as variáveis de ambiente do arquivo .env
 load_dotenv()
@@ -44,9 +45,8 @@ class GroqClient:
 
             ## Idiomas 
             idiomas aqui
-
             '''
-
+        
         # Gerar a resposta usando o modelo de linguagem
         result_raw = self.generate_response(prompt=prompt)
         
@@ -86,7 +86,6 @@ class GroqClient:
             ```
             
             **Atenção:** Seja rigoroso ao atribuir as notas. A nota máxima é 10.0, e o output deve conter apenas "Pontuação Final: x.x".
-        
         '''
         
         # Tentar gerar a pontuação em múltiplas tentativas, caso necessário
@@ -106,7 +105,7 @@ class GroqClient:
         
         # Lançar um erro se não conseguir gerar a pontuação após várias tentativas
         raise ValueError("Não foi possível gerar a pontuação após várias tentativas.")
-    
+
     def extract_score_from_result(self, result_raw):
         """Extrair a pontuação final da resposta gerada."""
         # Definir o padrão de regex para buscar a pontuação na resposta
@@ -118,26 +117,51 @@ class GroqClient:
         if match:
             # Se encontrado, extrair o valor da pontuação
             score_str = match.group(1)
+            print(f"Valor de score_str: '{score_str}'")
+            
             if '/' in score_str:
                 score_str = score_str.split('/')[0]
             
+            # Garantir que o valor é numérico e válido
+            score_str = score_str.strip()  # Remove espaços extras
+            
+            # Verifica se score_str é vazio ou contém apenas um ponto ou vírgula
+            if score_str in ["", ".", ","]:
+                print("Pontuação inválida encontrada. Retornando None.")
+                return None  # Retorna None se for um valor inválido
+            
             # Retornar a pontuação como um número float
             return float(score_str.replace(',', '.'))
-        
+
         # Retornar None se não encontrar a pontuação
         return None
 
-    def generate_opnion(self, cv, job):
+    def generate_opinion(self, cv, job):
+        """
+        Gera uma análise crítica do currículo em relação à descrição da vaga.
+
+        Args:
+            cv (str): O currículo do candidato.
+            job (str): A descrição da vaga.
+
+        Returns:
+            str: A análise crítica formatada.
+        """
+        
+        # Verificar se cv e job não estão vazios
+        if not cv or not job:
+            raise ValueError("O currículo e a descrição da vaga não podem ser vazios.")
+        
         # Criar o prompt para gerar uma opinião crítica sobre o currículo
         prompt = f'''
             Por favor, analise o currículo fornecido em relação à descrição da vaga aplicada e crie uma opinião ultra crítica e detalhada. A sua análise deve incluir os seguintes pontos:
-            Você deve pensar como o recrutador chefe que está analisando e gerando uma opnião descritiva sobre o curriculo do canditato que se candidatou para a vaga
+            Você deve pensar como o recrutador chefe que está analisando e gerando uma opinião descritiva sobre o currículo do candidato que se candidatou para a vaga.
             
-            Formate a resposta de forma profissional, coloque titulos grandes nas sessões.
+            Formate a resposta de forma profissional, coloque títulos grandes nas seções.
 
             1. **Pontos de Alinhamento**: Identifique e discuta os aspectos do currículo que estão diretamente alinhados com os requisitos da vaga. Inclua exemplos específicos de experiências, habilidades ou qualificações que correspondem ao que a vaga está procurando.
 
-            2. **Pontos de Desalinhamento**: Destaque e discuta as áreas onde o candidato não atende aos requisitos da vaga. Isso pode incluir falta de experiência em áreas chave, ausência de habilidades técnicas específicas, ou qualificações que não correspondem às expectativas da vaga.
+            2. **Pontos de Desalinhamento**: Destaque e discuta as áreas onde o candidato não atende aos requisitos da vaga. Isso pode incluir falta de experiência em áreas-chave, ausência de habilidades técnicas específicas, ou qualificações que não correspondem às expectativas da vaga.
 
             3. **Pontos de Atenção**: Identifique e discuta características do currículo que merecem atenção especial. Isso pode incluir aspectos como a frequência com que o candidato troca de emprego, lacunas no histórico de trabalho, ou características pessoais que podem influenciar o desempenho no cargo, tanto de maneira positiva quanto negativa.
 
@@ -149,9 +173,81 @@ class GroqClient:
             **Descrição da Vaga:**
             {job}
             
-            Você deve devolver essa analise critica formatada como se fosse um relatorio analitico do curriculum com a vaga, deve estar formatado com titulos grandes em destaques
+            Você deve devolver essa análise crítica formatada como se fosse um relatório analítico do currículo com a vaga, e deve estar formatado com títulos grandes em destaque.
         '''
-        # Gerar a resposta usando o modelo de linguagem
-        result_raw = self.generate_response(prompt=prompt)
-        result = result_raw
-        return result
+
+        try:
+            # Gerar a resposta usando o modelo de linguagem
+            result_raw = self.generate_response(prompt=prompt)
+            return result_raw
+        except Exception as e:
+            # Tratar erros durante a chamada do modelo
+            print(f"Erro ao gerar opinião: {e}")
+            return "Erro ao gerar a análise. Tente novamente mais tarde."
+
+    def extract_candidate_summary(self, cv):
+        """
+        Extrai um resumo breve das informações do candidato.
+
+        Args:
+            cv (str): O currículo do candidato.
+
+        Returns:
+            dict: Um dicionário com as informações do candidato.
+        """
+        prompt = f'''
+            **Solicitação de Extração de Informações do Candidato:**
+
+            Por favor, analise o seguinte currículo e extraia as seguintes informações:
+            - Nome
+            - Email
+            - Telefone
+            - Localização
+
+            **Currículo do Candidato:**
+            {cv}
+
+            **Output Esperado:**
+            Um JSON com as informações extraídas, seguindo o modelo abaixo:
+            {{
+                "nome": "Nome do Candidato",
+                "email": "email@exemplo.com",
+                "telefone": "(11) 12345-6789",
+                "localizacao": "Cidade, Estado"
+            }}
+        '''
+
+        try:
+            # Gerar a resposta usando o modelo de linguagem
+            result_raw = self
+            # Gerar a resposta usando o modelo de linguagem
+            result_raw = self.generate_response(prompt=prompt)
+            
+            # Tentar extrair o JSON da resposta gerada
+            result = json.loads(result_raw)
+            return result
+        except json.JSONDecodeError:
+            # Se a resposta não for um JSON válido, retornar uma mensagem de erro
+            print("Erro ao decodificar a resposta JSON.")
+            return None
+        except Exception as e:
+            # Tratar outros erros
+            print(f"Erro ao extrair o resumo do candidato: {e}")
+            return None
+
+    def get_score_comment(self, score):
+        """
+        Gera um comentário sobre a pontuação do currículo.
+        
+        Args:
+            score (float): A pontuação do currículo.
+
+        Returns:
+            str: Um comentário amigável sobre a pontuação.
+        """
+        if score < 7:
+            return "A pontuação está abaixo do ideal. Mas não desanime! Cada currículo é uma oportunidade de aprendizado e crescimento. Considere ajustar alguns detalhes e tentar novamente."
+        elif 7 <= score < 9:
+            return "Bom trabalho! Sua pontuação está em uma faixa aceitável, mas há espaço para melhorias. Revise seu currículo e veja onde você pode destacar ainda mais suas experiências e habilidades."
+        else:  # score >= 9
+            return "Excelente! Sua pontuação é impressionante. Você está no caminho certo. Continue assim e boa sorte na sua busca pela vaga!"

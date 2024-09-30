@@ -29,8 +29,8 @@ for path in cv_paths:
     print(resum)  # Exibir o resumo gerado para o usuário
     
     # Gerar uma opinião sobre o currículo com base na vaga de emprego
-    opnion = ai.generate_opnion(content, job)
-    print(opnion)  # Exibir a opinião gerada para o usuário
+    opinion = ai.generate_opinion(content, job)
+    print(opinion)  # Exibir a opinião gerada para o usuário
     
     # Calcular uma pontuação para o currículo com base no resumo e nos requisitos da vaga
     score = ai.generate_score(resum, job)
@@ -42,7 +42,7 @@ for path in cv_paths:
         job_id=job.get('id'),  # Associar o ID da vaga ao resumo
         content=resum,  # Armazenar o conteúdo do resumo
         file=str(path),  # Armazenar o caminho do arquivo de currículo
-        opnion=opnion  # Armazenar a opinião gerada
+        opinion=opinion  # Armazenar a opinião gerada
     )
     
     # Criar uma instância do schema File para armazenar os dados do arquivo
