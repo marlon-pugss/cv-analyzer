@@ -1,20 +1,51 @@
+import os.path
 import uuid
 import streamlit as st
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseDownload
 from helper import extract_data_analysis, get_pdf_paths, read_uploaded_file
 from database import AnalyzeDatabase
 from ai import GroqClient
 from models.resum import Resum
 from models.file import File
 import matplotlib.pyplot as plt
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseDownload
-from google.oauth2.credentials import Credentials
 
-# Escopo de acesso
-SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
+# Defina o escopo de acesso que você precisa
+SCOPES = [
+    "https://www.googleapis.com/auth/drive.file",
+    "https://www.googleapis.com/auth/drive.readonly",
+    "https://www.googleapis.com/auth/drive.metadata.readonly"
+]
 
-# Carregar credenciais do arquivo token.json
-creds = Credentials.from_authorized_user_file('cv-analyzer/analyze/drive/token.json', SCOPES)
+# Inicialize a variável de credenciais
+creds = None
+
+# Verifica se o arquivo token.json existe no diretório atual
+if os.path.exists('token.json'):
+    # Se existir, carrega as credenciais a partir do arquivo token.json
+    creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+    st.success('Credenciais carregadas do arquivo token.json.')
+
+# Verifica se as credenciais não existem ou são inválidas/expiradas
+if not creds or not creds.valid:
+    # Se as credenciais existirem mas estiverem expiradas e puderem ser renovadas
+    if creds and creds.expired and creds.refresh_token:
+        creds.refresh(Request())
+        st.success('Credenciais renovadas com sucesso.')
+    else:
+        # Se não houver credenciais válidas, inicia o fluxo de autorização do OAuth
+        st.warning('Iniciando o fluxo de autorização do OAuth...')
+        flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
+        creds = flow.run_local_server(port=0)  # Executa o servidor local para autorização
+        st.success('Autorização concluída.')
+
+    # Salva as credenciais renovadas ou novas no arquivo token.json
+    with open('token.json', 'w') as token:
+        token.write(creds.to_json())
+        st.success('Credenciais salvas no arquivo token.json.')
 
 # Construa o serviço da API Google Drive
 service = build('drive', 'v3', credentials=creds)
@@ -45,8 +76,8 @@ else:
             done = False
             while not done:
                 status, done = downloader.next_chunk()
-                st.write(f"Download {int(status.progress() * 100)}%.")
-    
+                st.write(f"Download {int(status.progress() * 100)}% concluído.")
+
 # Inicializa a base de dados e a IA
 database = AnalyzeDatabase()
 ai = GroqClient()
