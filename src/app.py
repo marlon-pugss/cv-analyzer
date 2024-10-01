@@ -24,8 +24,8 @@ SCOPES = [
 creds = None
 
 # Verifique se o arquivo credentials.json existe
-credentials_path = 'credentials.json'  # Altere o caminho conforme necessário
-if not os.path.exists(credentials_path):  # Corrigido aqui
+credentials_path = 'credentials.json'  # Considerando que está na mesma pasta que o app.py
+if not os.path.exists(credentials_path):
     raise FileNotFoundError('O arquivo credentials.json não foi encontrado. Por favor, crie-o manualmente no Google Cloud Console.')
 
 # Verifique se o arquivo token.json existe
