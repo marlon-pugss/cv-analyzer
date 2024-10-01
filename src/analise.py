@@ -9,7 +9,7 @@ database = AnalyzeDatabase()
 ai = GroqClient()
 job = database.get_job_by_name('Vaga de Gestor Comercial de B2B')
 
-cv_paths = get_pdf_paths(directory='/Users/fluencyacademy/projeto-pessoal/cv-analyzer/analyze/drive/curriculos')
+cv_paths = get_pdf_paths(directory='/Users/fluencyacademy/projeto-pessoal/src/drive/curriculos')
 
 for path in cv_paths:
     content = read_uploaded_file(path)

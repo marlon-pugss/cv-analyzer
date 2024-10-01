@@ -21,7 +21,7 @@ st.set_page_config(layout="wide", page_title="Análise de Currículos", page_ico
 st.title("🔍 Análise de Currículos para a Vaga: **Gestor Comercial de B2B**")
 
 # Pega o caminho dos currículos no diretório especificado
-cv_paths = get_pdf_paths(directory='/Users/fluencyacademy/projeto-pessoal/cv-analyzer/analyze/drive/curriculos')
+cv_paths = get_pdf_paths(directory='/Users/fluencyacademy/projeto-pessoal/src/drive/curriculos')
 
 # Lista para armazenar os scores dos candidatos
 scores = []
