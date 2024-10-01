@@ -24,8 +24,8 @@ SCOPES = [
 creds = None
 
 # Verifique se o arquivo credentials.json existe
-credentials_path = 'credentials.json'  # Considerando que está na mesma pasta que o app.py
-if not os.path.exists({"installed":{"client_id":"912425965095-flp8g1i5anr6gbq5mts4km74254u90pj.apps.googleusercontent.com","project_id":"cv-analyzer-436900","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_secret":"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","redirect_uris":["http://localhost"]}}):
+credentials_path = '{"installed":{"client_id":"912425965095-flp8g1i5anr6gbq5mts4km74254u90pj.apps.googleusercontent.com","project_id":"cv-analyzer-436900","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_secret":"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","redirect_uris":["http://localhost"]}}'  # Considerando que está na mesma pasta que o app.py
+if not os.path.exists(credentials_path):
     raise FileNotFoundError('O arquivo credentials.json não foi encontrado. Por favor, crie-o manualmente no Google Cloud Console.')
 
 # Verifique se o arquivo token.json existe
