@@ -24,7 +24,7 @@ SCOPES = [
 creds = None
 
 # Verifique se o arquivo credentials.json existe
-credentials_path = '/src/drive/credentials.json'  # Altere o caminho conforme necessário
+credentials_path = 'drive/credentials.json'  # Altere o caminho conforme necessário
 if not os.path.exists(credentials_path):  # Corrigido aqui
     raise FileNotFoundError('O arquivo credentials.json não foi encontrado. Por favor, crie-o manualmente no Google Cloud Console.')
 
