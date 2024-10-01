@@ -156,3 +156,4 @@ uvicorn==0.31.0
 virtualenv==20.26.5
 wcwidth==0.2.13
 xattr==1.1.0
+tools==0.1.9
