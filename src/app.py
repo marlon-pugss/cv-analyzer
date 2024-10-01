@@ -4,7 +4,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
-from google_auth_oauthlib.flow import InstalledAppFlow
+from google_auth_oauthlib.flow import Flow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from helper import extract_data_analysis, get_pdf_paths, read_uploaded_file
@@ -13,20 +13,28 @@ from ai import GroqClient
 from models.resum import Resum
 from models.file import File
 
-# Define o escopo de acesso
+# Defina o escopo de acesso
 SCOPES = [
     "https://www.googleapis.com/auth/drive.file",
     "https://www.googleapis.com/auth/drive.readonly",
     "https://www.googleapis.com/auth/drive.metadata.readonly"
 ]
 
+# Credenciais passadas diretamente no código
+client_config = {
+    "installed": {
+        "client_id": "912425965095-flp8g1i5anr6gbq5mts4km74254u90pj.apps.googleusercontent.com",
+        "project_id": "cv-analyzer-436900",
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+        "client_secret": "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",
+        "redirect_uris": ["http://localhost"]
+    }
+}
+
 # Inicializa as credenciais
 creds = None
-
-# Verifique se o arquivo credentials.json existe
-credentials_path = '{"installed":{"client_id":"912425965095-flp8g1i5anr6gbq5mts4km74254u90pj.apps.googleusercontent.com","project_id":"cv-analyzer-436900","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_secret":"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","redirect_uris":["http://localhost"]}}'  # Considerando que está na mesma pasta que o app.py
-if not os.path.exists(credentials_path):
-    raise FileNotFoundError('O arquivo credentials.json não foi encontrado. Por favor, crie-o manualmente no Google Cloud Console.')
 
 # Verifique se o arquivo token.json existe
 if os.path.exists('token.json'):
@@ -40,7 +48,7 @@ if not creds or not creds.valid:
         print('Credenciais renovadas com sucesso.')
     else:
         print('Iniciando o fluxo de autorização do OAuth...')
-        flow = InstalledAppFlow.from_client_secrets_file(credentials_path, SCOPES)
+        flow = Flow.from_client_config(client_config, SCOPES)
         creds = flow.run_local_server(port=0)  # Executa o servidor local para autorização
         print('Autorização concluída.')
 
