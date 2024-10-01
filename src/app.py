@@ -13,14 +13,14 @@ from ai import GroqClient
 from models.resum import Resum
 from models.file import File
 
-# Defina o escopo de acesso
+# Define o escopo de acesso
 SCOPES = [
     "https://www.googleapis.com/auth/drive.file",
     "https://www.googleapis.com/auth/drive.readonly",
     "https://www.googleapis.com/auth/drive.metadata.readonly"
 ]
 
-# Credenciais passadas diretamente no código
+# Configuração do client_config para autenticação
 client_config = {
     "installed": {
         "client_id": "912425965095-flp8g1i5anr6gbq5mts4km74254u90pj.apps.googleusercontent.com",
@@ -36,12 +36,12 @@ client_config = {
 # Inicializa as credenciais
 creds = None
 
-# Verifique se o arquivo token.json existe
+# Verifica se o arquivo token.json existe
 if os.path.exists('token.json'):
     creds = Credentials.from_authorized_user_file('token.json', SCOPES)
     print('Credenciais carregadas do arquivo token.json.')
 
-# Verifique se as credenciais não existem ou são inválidas/expiradas
+# Verifica se as credenciais não existem ou são inválidas/expiradas
 if not creds or not creds.valid:
     if creds and creds.expired and creds.refresh_token:
         creds.refresh(Request())
@@ -49,7 +49,7 @@ if not creds or not creds.valid:
     else:
         print('Iniciando o fluxo de autorização do OAuth...')
         flow = Flow.from_client_config(client_config, SCOPES)
-        creds = flow.run_local_server(port=0)  # Executa o servidor local para autorização
+        creds = flow.run_console()  # Executa o fluxo de autorização via console
         print('Autorização concluída.')
 
     # Salva as credenciais renovadas ou novas no arquivo token.json
