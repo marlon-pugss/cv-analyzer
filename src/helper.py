@@ -1,15 +1,16 @@
 import re
 import uuid
 import os
-import fitz  # PyMuPDF para leitura de PDFs
+from PyPDF2 import PdfReader  # Usando PyPDF2 para leitura de PDFs
 from models.analysis import Analysis
 
 def read_uploaded_file(file_path):
     """Lê o conteúdo de um arquivo PDF e retorna o texto extraído."""
     text = ""
-    with fitz.open(file_path) as doc:
-        for page in doc:
-            text += page.get_text()  # Extrai o texto de cada página do PDF
+    with open(file_path, "rb") as file:
+        reader = PdfReader(file)
+        for page in reader.pages:
+            text += page.extract_text()  # Extrai o texto de cada página do PDF
     return text
 
 def extract_data_analysis(resum_cv, job_id, resum_id, score) -> Analysis:

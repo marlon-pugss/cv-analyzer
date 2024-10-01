@@ -31,7 +31,6 @@ etelemetry==0.3.1
 executing==2.1.0
 fastjsonschema==2.20.0
 filelock==3.16.1
-fitz==0.0.1.dev2
 fonttools==4.54.1
 frontend==0.0.3
 gitdb==4.0.11
@@ -112,8 +111,6 @@ pydantic_core==2.23.4
 pydeck==0.9.1
 pydot==3.0.2
 Pygments==2.18.0
-PyMuPDF==1.24.10
-PyMuPDFb==1.24.10
 pyparsing==3.1.4
 pyproject_hooks==1.1.0
 python-dateutil==2.9.0.post0
@@ -159,3 +156,4 @@ uvicorn==0.31.0
 virtualenv==20.26.5
 wcwidth==0.2.13
 xattr==1.1.0
+PyPDF2==3.0.1
