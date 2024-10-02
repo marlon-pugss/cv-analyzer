@@ -1,67 +1,37 @@
-import uuid
 import streamlit as st
-from helper import extract_data_analysis, read_uploaded_file
-from database import AnalyzeDatabase
-from ai import GroqClient
-from models.resum import Resum
-from models.file import File
+from client import GroqClient
 
-# Inicializando o banco de dados e o cliente AI
-database = AnalyzeDatabase()
-ai = GroqClient()
+# Inicializar o cliente Groq
+client = GroqClient()
 
-# Permitir o upload de múltiplos arquivos PDF
-uploaded_files = st.file_uploader("Carregue seus currículos", type=["pdf"], accept_multiple_files=True)
+st.title("Analisador de Currículos")
 
-# Campo para a descrição da vaga
-job_description = st.text_area("Descrição da Vaga", placeholder="Insira aqui a descrição da vaga...")
+# Inputs do usuário
+cv = st.text_area("Insira o currículo do candidato:", height=300)
+job_description = st.text_area("Insira a descrição da vaga:", height=300)
 
-# Verifica se currículos foram carregados e se a descrição da vaga foi fornecida
-if uploaded_files and job_description:
-    # Exibe o total de currículos encontrados
-    num_curriculos = len(uploaded_files)
-    st.write(f"Total de currículos encontrados: {num_curriculos}")
+# Botão para prosseguir com a análise
+if st.button("Analisar Currículo"):
+    if cv and job_description:
+        # Gerar resumo do CV
+        resume = client.resume_cv(cv)
+        st.subheader("Resumo do Currículo:")
+        st.markdown(resume)
 
-    for uploaded_file in uploaded_files:
-        # Lê o conteúdo do arquivo PDF carregado
-        content = read_uploaded_file(uploaded_file)
+        # Gerar pontuação
+        score = client.generate_score(cv, job_description)
+        st.subheader("Pontuação do Currículo:")
+        st.write(f"Pontuação: {score:.2f}")
 
-        # Gera resumo, opinião e score do currículo
-        resum = ai.resume_cv(content)
-        opinion = ai.generate_opinion(content, job_description)
-        score = ai.generate_score(content, job_description)
-
-        # Salva os dados processados no banco de dados
-        resum_schema = Resum(
-            id=str(uuid.uuid4()),
-            job_id=job_description,  # Caso você tenha um ID de trabalho correspondente
-            content=resum,
-            file=uploaded_file.name,
-            opinion=opinion
-        )
-
-        file_schema = File(
-            file_id=str(uuid.uuid4()),
-            job_id=job_description  # Caso você tenha um ID de trabalho correspondente
-        )
-
-        analyzis_schema = extract_data_analysis(resum, job_description, resum_schema.id, score)
-
-        database.resums.insert(resum_schema.model_dump())
-        database.analysis.insert(analyzis_schema.model_dump())
-        database.files.insert(file_schema.model_dump())
-
-        # Exibe as análises
-        st.subheader(f"Análise do Currículo: {uploaded_file.name}")
-        st.write("### Resumo:")
-        st.markdown(resum)
-        st.write("### Opinião Crítica:")
+        # Gerar opinião crítica
+        opinion = client.generate_opinion(cv, job_description)
+        st.subheader("Opinião Crítica:")
         st.markdown(opinion)
-        st.write("### Pontuação:")
-        st.write(f"Pontuação Final: {score}")
 
-else:
-    if not uploaded_files:
-        st.warning("⚠️ Nenhum currículo carregado.")
-    if not job_description:
-        st.warning("⚠️ Por favor, insira a descrição da vaga.")
+        # Extrair informações do candidato
+        candidate_info = client.extract_candidate_summary(cv)
+        st.subheader("Informações do Candidato:")
+        st.json(candidate_info)
+    else:
+        st.warning("Por favor, insira tanto o currículo quanto a descrição da vaga.")
+
