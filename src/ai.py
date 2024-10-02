@@ -1,4 +1,5 @@
 import re
+import os  # Importado para carregar a chave de API
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
 import json  # Importando json para manipulação de dados
@@ -8,9 +9,18 @@ load_dotenv()
 
 class GroqClient:
     def __init__(self, model_id="llama-3.1-70b-versatile"):
+        # Carregar a chave de API do ambiente
+        self.api_key = os.getenv("GROQ_API_KEY")
+        if not self.api_key:
+            raise ValueError("A chave de API não foi encontrada no arquivo .env.")
+
         # Inicializar o modelo de linguagem com o ID especificado
         self.model_id = model_id
-        self.client = ChatGroq(model=model_id)
+        try:
+            self.client = ChatGroq(model=model_id, api_key=self.api_key)  # Passar a chave de API aqui
+        except Exception as e:
+            print(f"Erro ao inicializar o cliente Groq: {e}")
+            raise
 
     def generate_response(self, prompt):
         # Enviar o prompt ao modelo e obter a resposta
@@ -207,47 +217,39 @@ class GroqClient:
             **Currículo do Candidato:**
             {cv}
 
-            **Output Esperado:**
-            Um JSON com as informações extraídas, seguindo o modelo abaixo:
+            **Formato do Output:**
+            ```json
             {{
-                "nome": "Nome do Candidato",
-                "email": "email@exemplo.com",
-                "telefone": "(11) 12345-6789",
-                "localizacao": "Cidade, Estado"
+                "Nome": "nome do candidato",
+                "Email": "email do candidato",
+                "Telefone": "telefone do candidato",
+                "Localização": "localização do candidato"
             }}
+            ```
+
+            **Atenção:** Não inclua explicações, apenas forneça as informações extraídas no formato JSON especificado acima.
         '''
 
         try:
             # Gerar a resposta usando o modelo de linguagem
-            result_raw = self
-            # Gerar a resposta usando o modelo de linguagem
             result_raw = self.generate_response(prompt=prompt)
-            
-            # Tentar extrair o JSON da resposta gerada
-            result = json.loads(result_raw)
-            return result
+            # Retornar a resposta processada
+            return json.loads(result_raw)
         except json.JSONDecodeError:
-            # Se a resposta não for um JSON válido, retornar uma mensagem de erro
-            print("Erro ao decodificar a resposta JSON.")
-            return None
+            print("Erro ao decodificar o JSON da resposta.")
+            return None  # Retornar None se a resposta não puder ser decodificada
         except Exception as e:
-            # Tratar outros erros
-            print(f"Erro ao extrair o resumo do candidato: {e}")
+            print(f"Erro ao extrair informações do candidato: {e}")
             return None
 
-    def get_score_comment(self, score):
-        """
-        Gera um comentário sobre a pontuação do currículo.
-        
-        Args:
-            score (float): A pontuação do currículo.
+    def test_connection(self):
+        try:
+            response = self.client.invoke("Teste de conexão")
+            print("Conexão bem-sucedida:", response)
+        except Exception as e:
+            print("Falha na conexão:", e)
 
-        Returns:
-            str: Um comentário amigável sobre a pontuação.
-        """
-        if score < 7:
-            return "A pontuação está abaixo do ideal. Mas não desanime! Cada currículo é uma oportunidade de aprendizado e crescimento. Considere ajustar alguns detalhes e tentar novamente."
-        elif 7 <= score < 9:
-            return "Bom trabalho! Sua pontuação está em uma faixa aceitável, mas há espaço para melhorias. Revise seu currículo e veja onde você pode destacar ainda mais suas experiências e habilidades."
-        else:  # score >= 9
-            return "Excelente! Sua pontuação é impressionante. Você está no caminho certo. Continue assim e boa sorte na sua busca pela vaga!"
+# Exemplo de uso:
+if __name__ == "__main__":
+    client = GroqClient()
+    # Aqui você pode testar outros métodos conforme necessário
