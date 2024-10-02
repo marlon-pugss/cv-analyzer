@@ -4,13 +4,12 @@ import os
 from PyPDF2 import PdfReader  # Usando PyPDF2 para leitura de PDFs
 from models.analysis import Analysis
 
-def read_uploaded_file(file_path):
-    """Lê o conteúdo de um arquivo PDF e retorna o texto extraído."""
+def read_uploaded_file(uploaded_file):
+    # Lê o conteúdo do arquivo PDF carregado diretamente do objeto UploadedFile
     text = ""
-    with open(file_path, "rb") as file:
-        reader = PdfReader(file)
-        for page in reader.pages:
-            text += page.extract_text()  # Extrai o texto de cada página do PDF
+    reader = PdfReader(uploaded_file)  # Use o UploadedFile diretamente
+    for page in reader.pages:
+        text += page.extract_text()  # Extrai o texto de cada página
     return text
 
 def extract_data_analysis(resum_cv, job_id, resum_id, score) -> Analysis:
