@@ -29,7 +29,7 @@ client_config = {
         "token_uri": "https://oauth2.googleapis.com/token",
         "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
         "client_secret": "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",
-        "redirect_uris": ["http://localhost"]
+        "redirect_uris": ["http://localhost:8501"]  # Porta padrão do Streamlit
     }
 }
 
@@ -49,7 +49,9 @@ if not creds or not creds.valid:
     else:
         print('Iniciando o fluxo de autorização do OAuth...')
         flow = Flow.from_client_config(client_config, SCOPES)
-        creds = flow.run_console()  # Executa o fluxo de autorização via console
+        
+        # Executa o fluxo de autorização com run_local_server
+        creds = flow.run_local_server(port=8501)  # Usando a porta padrão do Streamlit
         print('Autorização concluída.')
 
     # Salva as credenciais renovadas ou novas no arquivo token.json
@@ -200,3 +202,4 @@ else:
                 ax.set_ylabel('Número de Candidatos')
                 ax.set_title('Ranking dos Candidatos por Faixa de Pontuação')
                 st.pyplot(fig)  # Exibe o gráfico no Streamlit
+
