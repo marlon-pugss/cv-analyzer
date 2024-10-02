@@ -68,16 +68,6 @@ try:
     num_curriculos = len(cv_paths)
     st.write(f"Total de currículos encontrados: {num_curriculos}")
 
-    # Se houver currículos, exibe cada um
-    for path in cv_paths:
-        st.subheader(f"Currículo: {os.path.basename(path)}")  # Exibe o nome do arquivo
-        with open(path, "rb") as pdf_file:
-            pdf_data = pdf_file.read()
-            # Converte o PDF para base64
-            pdf_base64 = base64.b64encode(pdf_data).decode('utf-8')
-            # Cria um link para o PDF
-            st.markdown(f'<iframe src="data:application/pdf;base64,{pdf_base64}" width="700" height="500"></iframe>', unsafe_allow_html=True)
-
 except FileNotFoundError:
     st.error(f"O diretório '{directory}' não foi encontrado. Verifique se o caminho está correto.")
 
