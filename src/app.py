@@ -20,14 +20,24 @@ if uploaded_files:
     st.write(f"Total de currículos encontrados: {num_curriculos}")
 
     for uploaded_file in uploaded_files:
+        # Lê o conteúdo do arquivo PDF carregado
         content = read_uploaded_file(uploaded_file)
-        st.write(content)  # Exibe o conteúdo do currículo
+
+        # Exibe o conteúdo do currículo (se necessário, você pode comentar esta linha)
+        st.write(content)  
+
+        # Gera resumo, opinião e score do currículo
         resum = ai.resume_cv(content)
-        st.write(resum)  # Exibe o resumo do currículo
+        st.write("### Resumo do Currículo:")
+        st.write(resum)
+
         opinion = ai.generate_opinion(content, job)
-        st.write(opinion)  # Exibe a opinião da IA
+        st.write("### Opinião da IA:")
+        st.write(opinion)
+
         score = ai.generate_score(content, job)
-        st.write(score)  # Exibe o score do currículo
+        st.write("### Score do Currículo:")
+        st.write(score)
 
         # Salva os dados processados no banco de dados
         resum_schema = Resum(
