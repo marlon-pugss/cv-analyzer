@@ -22,40 +22,44 @@ if uploaded_files and job_description:
     num_curriculos = len(uploaded_files)
     st.write(f"Total de currículos encontrados: {num_curriculos}")
 
-    for uploaded_file in uploaded_files:
-        # Lê o conteúdo do arquivo PDF carregado
-        content = read_uploaded_file(uploaded_file)
+    # Botão para continuar
+    if st.button("Continuar"):
+        for uploaded_file in uploaded_files:
+            # Lê o conteúdo do arquivo PDF carregado
+            content = read_uploaded_file(uploaded_file)
 
-        # Gera resumo, opinião e score do currículo
-        resum = ai.resume_cv(content)
-        opinion = ai.generate_opinion(content, job_description)
-        score = ai.generate_score(content, job_description)
+            # Gera resumo, opinião e score do currículo
+            resum = ai.resume_cv(content)
+            opinion = ai.generate_opinion(content, job_description)
+            score = ai.generate_score(content, job_description)
 
-        # Salva os dados processados no banco de dados
-        resum_schema = Resum(
-            id=str(uuid.uuid4()),
-            job_id=job_description,  # Caso você tenha um ID de trabalho correspondente
-            content=resum,
-            file=uploaded_file.name,
-            opinion=opinion
-        )
+            # Salva os dados processados no banco de dados
+            resum_schema = Resum(
+                id=str(uuid.uuid4()),
+                job_id=job_description,  # Caso você tenha um ID de trabalho correspondente
+                content=resum,
+                file=uploaded_file.name,
+                opinion=opinion
+            )
 
-        file_schema = File(
-            file_id=str(uuid.uuid4()),
-            job_id=job_description  # Caso você tenha um ID de trabalho correspondente
-        )
+            file_schema = File(
+                file_id=str(uuid.uuid4()),
+                job_id=job_description  # Caso você tenha um ID de trabalho correspondente
+            )
 
-        analyzis_schema = extract_data_analysis(resum, job_description, resum_schema.id, score)
+            analyzis_schema = extract_data_analysis(resum, job_description, resum_schema.id, score)
 
-        database.resums.insert(resum_schema.model_dump())
-        database.analysis.insert(analyzis_schema.model_dump())
-        database.files.insert(file_schema.model_dump())
+            database.resums.insert(resum_schema.model_dump())
+            database.analysis.insert(analyzis_schema.model_dump())
+            database.files.insert(file_schema.model_dump())
 
-        # Exibe as análises
-        st.subheader(f"Análise do Currículo: {uploaded_file.name}")
-        st.write("### Resumo:")
-        st.markdown(resum)
-        st.write("### Opinião Crítica:")
-        st.markdown(opinion)
-        st.write("### Pontuação:")
-        st.write(f"Pontuação Final: {score}")
+            # Exibe as análises
+            st.subheader(f"Análise do Currículo: {uploaded_file.name}")
+            st.write("### Resumo:")
+            st.markdown(resum)
+            st.write("### Opinião Crítica:")
+            st.markdown(opinion)
+            st.write("### Pontuação:")
+            st.write(f"Pontuação Final: {score}")
+else:
+    st.warning("⚠️ Nenhum currículo carregado ou descrição da vaga fornecida.")
