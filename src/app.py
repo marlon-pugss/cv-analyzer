@@ -54,6 +54,10 @@ st.title("🔍 Análise de Currículos para a Vaga: **Gestor Comercial de B2B**"
 # Pega o caminho dos currículos no diretório especificado
 cv_paths = get_pdf_paths(directory='/src/drive/curriculos')
 
+# Contar o número de currículos encontrados
+num_curriculos = len(cv_paths)
+st.write(f"📄 Número de currículos encontrados: {num_curriculos}")
+
 # Lista para armazenar os scores dos candidatos
 scores = []
 
