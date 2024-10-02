@@ -51,8 +51,19 @@ st.set_page_config(layout="wide", page_title="Análise de Currículos", page_ico
 # Exibe o título com um estilo
 st.title("🔍 Análise de Currículos para a Vaga: **Gestor Comercial de B2B**")
 
+# Caminho relativo para o diretório de currículos
+directory = 'src/drive/curriculos'
+
 # Pega o caminho dos currículos no diretório especificado
-cv_paths = get_pdf_paths(directory='/src/drive/curriculos')
+try:
+    cv_paths = get_pdf_paths(directory=directory)
+    
+    # Exibe quantos currículos foram encontrados
+    num_curriculos = len(cv_paths)
+    st.write(f"Total de currículos encontrados: {num_curriculos}")
+
+except FileNotFoundError:
+    st.error(f"O diretório '{directory}' não foi encontrado. Verifique se o caminho está correto.")
 
 # Contar o número de currículos encontrados
 num_curriculos = len(cv_paths)
