@@ -2,6 +2,7 @@ import os
 import uuid
 import streamlit as st
 import matplotlib.pyplot as plt
+import base64
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 from helper import extract_data_analysis, get_pdf_paths, read_uploaded_file
@@ -9,6 +10,7 @@ from database import AnalyzeDatabase
 from ai import GroqClient
 from models.resum import Resum
 from models.file import File
+
 
 # Token e credenciais
 token_info = {
@@ -53,11 +55,6 @@ st.title("🔍 Análise de Currículos para a Vaga: **Gestor Comercial de B2B**"
 
 # Caminho relativo para o diretório de currículos
 directory = 'src/drive/curriculos'
-import os
-import streamlit as st
-
-# Caminho relativo para o diretório de currículos
-directory = 'src/drive/curriculos'
 
 # Função para obter os caminhos dos PDFs
 def get_pdf_paths(directory):
@@ -74,12 +71,16 @@ try:
     # Se houver currículos, exibe cada um
     for path in cv_paths:
         st.subheader(f"Currículo: {os.path.basename(path)}")  # Exibe o nome do arquivo
-        # Cria um link para o PDF
-        pdf_file = open(path, "rb").read()
-        st.markdown(f'<iframe src="data:application/pdf;base64,{pdf_file.encode("base64")}" width="700" height="500"></iframe>', unsafe_allow_html=True)
+        with open(path, "rb") as pdf_file:
+            pdf_data = pdf_file.read()
+            # Converte o PDF para base64
+            pdf_base64 = base64.b64encode(pdf_data).decode('utf-8')
+            # Cria um link para o PDF
+            st.markdown(f'<iframe src="data:application/pdf;base64,{pdf_base64}" width="700" height="500"></iframe>', unsafe_allow_html=True)
 
 except FileNotFoundError:
     st.error(f"O diretório '{directory}' não foi encontrado. Verifique se o caminho está correto.")
+
 
 
 # Caminho relativo para o diretório de currículos
