@@ -16,18 +16,15 @@ uploaded_files = st.file_uploader("Carregue seus currículos", type=["pdf"], acc
 # Campo para a descrição da vaga
 job_description = st.text_area("Descrição da Vaga", placeholder="Insira aqui a descrição da vaga...")
 
-# Exibe o total de currículos encontrados
-if uploaded_files:
+# Verifica se currículos foram carregados e se a descrição da vaga foi fornecida
+if uploaded_files and job_description:
+    # Exibe o total de currículos encontrados
     num_curriculos = len(uploaded_files)
     st.write(f"Total de currículos encontrados: {num_curriculos}")
 
     for uploaded_file in uploaded_files:
         # Lê o conteúdo do arquivo PDF carregado
         content = read_uploaded_file(uploaded_file)
-
-        # Verificar se o currículo e a descrição da vaga não estão vazios
-        if not content or not job_description:
-            raise ValueError("O currículo e a descrição da vaga não podem ser vazios.")
 
         # Gera resumo, opinião e score do currículo
         resum = ai.resume_cv(content)
@@ -56,4 +53,7 @@ if uploaded_files:
         database.files.insert(file_schema.model_dump())
 
 else:
-    st.warning("⚠️ Nenhum currículo carregado.")
+    if not uploaded_files:
+        st.warning("⚠️ Nenhum currículo carregado.")
+    if not job_description:
+        st.warning("⚠️ Por favor, insira a descrição da vaga.")
