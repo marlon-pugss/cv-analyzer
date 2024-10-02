@@ -60,4 +60,4 @@ if uploaded_files:
         database.files.insert(file_schema.model_dump())
 
 else:
-    st.warning("⚠️ Nenhum currículo carregado.")
+    st.warning("⚠️ Nenhum currículo carregado.") 
