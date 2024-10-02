@@ -59,9 +59,3 @@ if uploaded_files and job_description:
         st.markdown(opinion)
         st.write("### Pontuação:")
         st.write(f"Pontuação Final: {score}")
-
-else:
-    if not uploaded_files:
-        st.warning("⚠️ Nenhum currículo carregado.")
-    if not job_description:
-        st.warning("⚠️ Por favor, insira a descrição da vaga.")
