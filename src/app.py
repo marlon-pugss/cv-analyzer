@@ -54,6 +54,30 @@ st.title("🔍 Análise de Currículos para a Vaga: **Gestor Comercial de B2B**"
 # Caminho relativo para o diretório de currículos
 directory = 'src/drive/curriculos'
 
+# Caminho relativo para o diretório de currículos
+directory = 'src/drive/curriculos'
+
+# Função para obter os caminhos dos PDFs
+def get_pdf_paths(directory):
+    return [os.path.join(directory, file) for file in os.listdir(directory) if file.endswith('.pdf')]
+
+# Pega o caminho dos currículos no diretório especificado
+try:
+    cv_paths = get_pdf_paths(directory=directory)
+    
+    # Exibe quantos currículos foram encontrados
+    num_curriculos = len(cv_paths)
+    st.write(f"Total de currículos encontrados: {num_curriculos}")
+
+    # Se houver currículos, exibe cada um
+    for path in cv_paths:
+        st.subheader(f"Currículo: {os.path.basename(path)}")  # Exibe o nome do arquivo
+        with open(path, 'rb') as pdf_file:
+            st.pdf(pdf_file)  # Exibe o PDF
+
+except FileNotFoundError:
+    st.error(f"O diretório '{directory}' não foi encontrado. Verifique se o caminho está correto.")
+
 # Pega o caminho dos currículos no diretório especificado
 try:
     cv_paths = get_pdf_paths(directory=directory)
