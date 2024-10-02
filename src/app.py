@@ -28,9 +28,8 @@ if uploaded_files and job_description:
 
         # Gera resumo, opinião e score do currículo
         resum = ai.resume_cv(content)
-
-        opinion = ai.generate_opinion(content, job_description)  # Passando a descrição da vaga
-        score = ai.generate_score(content, job_description)  # Passando a descrição da vaga
+        opinion = ai.generate_opinion(content, job_description)
+        score = ai.generate_score(content, job_description)
 
         # Salva os dados processados no banco de dados
         resum_schema = Resum(
@@ -51,6 +50,15 @@ if uploaded_files and job_description:
         database.resums.insert(resum_schema.model_dump())
         database.analysis.insert(analyzis_schema.model_dump())
         database.files.insert(file_schema.model_dump())
+
+        # Exibe as análises
+        st.subheader(f"Análise do Currículo: {uploaded_file.name}")
+        st.write("### Resumo:")
+        st.markdown(resum)
+        st.write("### Opinião Crítica:")
+        st.markdown(opinion)
+        st.write("### Pontuação:")
+        st.write(f"Pontuação Final: {score}")
 
 else:
     if not uploaded_files:
