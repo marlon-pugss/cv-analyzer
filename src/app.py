@@ -3,9 +3,6 @@ import uuid
 import streamlit as st
 import matplotlib.pyplot as plt
 from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseDownload
-from google_auth_oauthlib.flow import Flow
-from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from helper import extract_data_analysis, get_pdf_paths, read_uploaded_file
 from database import AnalyzeDatabase
@@ -13,83 +10,33 @@ from ai import GroqClient
 from models.resum import Resum
 from models.file import File
 
-# Define o escopo de acesso
-SCOPES = [
-    "https://www.googleapis.com/auth/drive.file",
-    "https://www.googleapis.com/auth/drive.readonly",
-    "https://www.googleapis.com/auth/drive.metadata.readonly"
-]
-
-# Configuração do client_config para autenticação
-client_config = {
-    "installed": {
-        "client_id": "912425965095-flp8g1i5anr6gbq5mts4km74254u90pj.apps.googleusercontent.com",
-        "project_id": "cv-analyzer-436900",
-        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-        "token_uri": "https://oauth2.googleapis.com/token",
-        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-        "client_secret": "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",
-        "redirect_uris": ["http://localhost:8501"]  # Porta padrão do Streamlit
-    }
+# Token e credenciais
+token_info = {
+    "token": "ya29.a0AcM612yH9v5F3JGfFKfV4F6ENxpmB-LBeficerv0NpOrxkvb7Qd7Lv5GbLdhjZFc9QDGk2aSPW7VJBv_U8EUloEr-yYqYAWPKZWm-KCv1VGjtCITDC67Zf0vClvCGCQ9KZWfAssyG_LMubg1U-f97h9BqK4JvgtBjYEICg5JaCgYKAUYSARISFQHGX2MiMRJJ9qGpoh2qH0AmU6gUog0175",
+    "refresh_token": "1//0hCKdupjTIpuuCgYIARAAGBESNwF-L9Ir50uGLBJ-WQVTBOUWwmdXPdqBPZvPS9nzltXxYD-LHb4rnIDk_fV6W0PaCgEoA8aRh0c",
+    "client_id": "912425965095-flp8g1i5anr6gbq5mts4km74254u90pj.apps.googleusercontent.com",
+    "client_secret": "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",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "scopes": [
+        "https://www.googleapis.com/auth/drive.file",
+        "https://www.googleapis.com/auth/drive.readonly",
+        "https://www.googleapis.com/auth/drive.metadata.readonly"
+    ],
+    "expiry": "2024-09-27T01:43:57.417822Z"
 }
 
-# Inicializa as credenciais
-creds = None
-
-# Verifica se o arquivo token.json existe
-if os.path.exists('token.json'):
-    creds = Credentials.from_authorized_user_file('token.json', SCOPES)
-    print('Credenciais carregadas do arquivo token.json.')
-
-# Verifica se as credenciais não existem ou são inválidas/expiradas
-if not creds or not creds.valid:
-    if creds and creds.expired and creds.refresh_token:
-        creds.refresh(Request())
-        print('Credenciais renovadas com sucesso.')
-    else:
-        print('Iniciando o fluxo de autorização do OAuth...')
-        flow = Flow.from_client_config(client_config, SCOPES)
-        
-        # Executa o fluxo de autorização com run_local_server
-        creds = flow.run_local_server(port=8501)  # Usando a porta padrão do Streamlit
-        print('Autorização concluída.')
-
-    # Salva as credenciais renovadas ou novas no arquivo token.json
-    with open('token.json', 'w') as token:
-        token.write(creds.to_json())
-        print('Credenciais salvas no arquivo token.json.')
+# Cria um objeto de credenciais a partir do dicionário
+creds = Credentials(
+    token=token_info["token"],
+    refresh_token=token_info["refresh_token"],
+    token_uri=token_info["token_uri"],
+    client_id=token_info["client_id"],
+    client_secret=token_info["client_secret"],
+    scopes=token_info["scopes"]
+)
 
 # Construa o serviço da API Google Drive
 service = build('drive', 'v3', credentials=creds)
-
-# ID da pasta que você deseja listar os arquivos
-folder_id = '1bnvaXQq7s1gJyh4w-b6QnW4fT-C6mIzK'
-
-# Lista arquivos na pasta especificada pelo folder_id
-results = service.files().list(
-    q=f"'{folder_id}' in parents", fields="files(id, name)"
-).execute()
-
-# Obtém a lista de arquivos
-files = results.get('files', [])
-
-# Download de cada arquivo no drive
-if not files:
-    raise FileNotFoundError('Nenhum arquivo encontrado.')
-else:
-    print('Files:')
-    for file in files:
-        print(f"{file['name']} ({file['id']})")
-
-        # Download de cada arquivo no drive
-        request = service.files().get_media(fileId=file['id'])
-        file_path = f"cv-analyzer/analyze/drive/curriculos/{file['name']}"  # Define o caminho de onde salvar o arquivo
-        with open(file_path, 'wb') as f:
-            downloader = MediaIoBaseDownload(f, request)
-            done = False
-            while not done:
-                status, done = downloader.next_chunk()
-                print(f"Download {int(status.progress() * 100)}%.")
 
 # Inicializa a base de dados e a IA
 database = AnalyzeDatabase()
@@ -202,4 +149,3 @@ else:
                 ax.set_ylabel('Número de Candidatos')
                 ax.set_title('Ranking dos Candidatos por Faixa de Pontuação')
                 st.pyplot(fig)  # Exibe o gráfico no Streamlit
-
