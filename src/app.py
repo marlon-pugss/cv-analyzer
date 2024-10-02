@@ -1,64 +1,53 @@
-import os
-import streamlit as st
 import uuid
-from your_database_module import AnalyzeDatabase  # Altere para o módulo correto
-from your_ai_module import GroqClient  # Altere para o módulo correto
+import streamlit as st
+from helper import extract_data_analysis, read_uploaded_file
+from database import AnalyzeDatabase
+from ai import GroqClient
+from models.resum import Resum
+from models.file import File
 
-# Inicializa a base de dados e a IA
+# Inicializando o banco de dados e o cliente AI
 database = AnalyzeDatabase()
 ai = GroqClient()
+job = database.get_job_by_name('Vaga de Gestor Comercial de B2B')
 
-# Caminho relativo para o diretório de currículos
-directory = 'src/drive/curriculos'
+# Permitir o upload de múltiplos arquivos PDF
+uploaded_files = st.file_uploader("Carregue seus currículos", type=["pdf"], accept_multiple_files=True)
 
-# Função para obter os caminhos dos PDFs
-def get_pdf_paths(directory):
-    return [os.path.join(directory, file) for file in os.listdir(directory) if file.endswith('.pdf')]
+# Exibe o total de currículos encontrados
+if uploaded_files:
+    num_curriculos = len(uploaded_files)
+    st.write(f"Total de currículos encontrados: {num_curriculos}")
 
-# Pega o caminho dos currículos no diretório especificado
-cv_paths = get_pdf_paths(directory)
+    for uploaded_file in uploaded_files:
+        content = read_uploaded_file(uploaded_file)
+        st.write(content)  # Exibe o conteúdo do currículo
+        resum = ai.resume_cv(content)
+        st.write(resum)  # Exibe o resumo do currículo
+        opinion = ai.generate_opinion(content, job)
+        st.write(opinion)  # Exibe a opinião da IA
+        score = ai.generate_score(content, job)
+        st.write(score)  # Exibe o score do currículo
 
-# Exibe quantos currículos foram encontrados
-num_curriculos = len(cv_paths)
-st.write(f"Total de currículos encontrados: {num_curriculos}")
+        # Salva os dados processados no banco de dados
+        resum_schema = Resum(
+            id=str(uuid.uuid4()),
+            job_id=job.get('id'),
+            content=resum,
+            file=uploaded_file.name,
+            opinion=opinion
+        )
 
-# Lista para armazenar os scores dos candidatos
-scores = []
+        file_schema = File(
+            file_id=str(uuid.uuid4()),
+            job_id=job.get('id')
+        )
 
-# Verifica se há currículos no diretório
-if num_curriculos > 0:
-    # Cria um botão para iniciar a análise
-    if st.button("Iniciar Análise dos Currículos"):
-        # Exibe um GIF ou imagem enquanto os dados estão carregando
-        with st.spinner("Analisando currículos... ⏳"):
-            # Processa cada currículo
-            for path in cv_paths:
-                # Lê o conteúdo do arquivo de currículo
-                with open(path, 'r') as file:
-                    content = file.read()
+        analyzis_schema = extract_data_analysis(resum, job.get('id'), resum_schema.id, score)
 
-                # Chama o método para extrair as informações do candidato
-                candidate_summary = ai.extract_candidate_summary(content)
-                
-                # Gera a opinião da IA
-                opinion = ai.generate_opinion(content)
-                
-                # Gera o score do currículo
-                score = ai.generate_score(content)
-                
-                # Armazena o score para o gráfico
-                scores.append(score)
-
-                # Exibe as análises
-                st.subheader(f"Análise do Currículo: {os.path.basename(path)}")
-                st.write(f"**Opinião da IA:** {opinion}")
-                st.write(f"**Score do Currículo:** {score}")
-                st.markdown("---")
-                
-        # Gera um resumo das análises
-        if scores:
-            avg_score = sum(scores) / len(scores)
-            st.write(f"**Score médio dos currículos:** {avg_score:.2f}")
+        database.resums.insert(resum_schema.model_dump())
+        database.analysis.insert(analyzis_schema.model_dump())
+        database.files.insert(file_schema.model_dump())
 
 else:
-    st.warning("⚠️ Nenhum currículo encontrado no diretório especificado.")
+    st.warning("⚠️ Nenhum currículo carregado.")
