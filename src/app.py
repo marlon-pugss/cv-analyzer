@@ -62,4 +62,5 @@ if uploaded_files and job_description:
             st.write("### Pontuação:")
             st.write(f"Pontuação Final: {score}")
 else:
+    # Mensagem de aviso caso não haja arquivos ou descrição
     st.warning("⚠️ Nenhum currículo carregado ou descrição da vaga fornecida.")
