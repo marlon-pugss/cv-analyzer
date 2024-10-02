@@ -33,6 +33,9 @@ if uploaded_files and job_description:
             opinion = ai.generate_opinion(content, job_description)
             score = ai.generate_score(content, job_description)
 
+            # Classifica a pontuação e gera feedback humanizado
+            feedback = ai.classify_score(score)
+
             # Salva os dados processados no banco de dados
             resum_schema = Resum(
                 id=str(uuid.uuid4()),
@@ -61,6 +64,8 @@ if uploaded_files and job_description:
             st.markdown(opinion)
             st.write("### Pontuação:")
             st.write(f"Pontuação Final: {score}")
+            st.write("### Feedback:")
+            st.write(feedback)
 else:
     # Mensagem de aviso caso não haja arquivos ou descrição
     st.warning("⚠️ Nenhum currículo carregado ou descrição da vaga fornecida.")

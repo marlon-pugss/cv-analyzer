@@ -242,6 +242,23 @@ class GroqClient:
             print(f"Erro ao extrair informações do candidato: {e}")
             return None
 
+    def classify_score(self, score):
+            """
+            Classifica a pontuação do currículo e fornece feedback humanizado.
+
+            Args:
+                score (float): A pontuação do currículo.
+
+            Returns:
+                str: Um feedback humanizado sobre a pontuação.
+            """
+            if score < 7:
+                return "A pontuação está abaixo do ideal. Considere revisar o currículo para destacar suas experiências e habilidades. Cada detalhe conta!"
+            elif 7 <= score < 9:
+                return "Bom trabalho! Sua pontuação é aceitável, mas há espaço para melhorias. Revise seu currículo e veja onde pode destacar ainda mais suas experiências e habilidades."
+            else:  # score >= 9
+                return "Excelente! Sua pontuação é impressionante. Você está no caminho certo e deve continuar assim. Boa sorte na sua busca pela vaga!"
+
     def test_connection(self):
         try:
             response = self.client.invoke("Teste de conexão")
