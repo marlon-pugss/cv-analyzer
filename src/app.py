@@ -58,9 +58,6 @@ if uploaded_files and job_description:
             # Gerar sugestões de melhoria
             suggestions = ["Melhore a formatação", "Adicione experiências relevantes", "Revise as palavras-chave"]
 
-            # Gerar PDF com sugestões
-            pdf_file_path = generate_pdf(suggestions, uploaded_file.name.split('.')[0] + "_sugestoes")
-
             # Salva os dados processados no banco de dados
             resum_schema = Resum(
                 id=str(uuid.uuid4()),
@@ -91,9 +88,6 @@ if uploaded_files and job_description:
             st.write(f"Pontuação Final: {score}")
             st.write("### Feedback:")
             st.write(feedback)
-
-            # Link para download do PDF
-            st.download_button(label="Baixar Sugestões de Melhoria", data=open(pdf_file_path, "rb"), file_name=f"{uploaded_file.name.split('.')[0]}_sugestoes.pdf")
 
 else:
     # Mensagem de aviso caso não haja arquivos ou descrição
