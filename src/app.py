@@ -20,9 +20,10 @@ job_description = st.text_area("Descrição da Vaga", placeholder="Insira aqui a
 if uploaded_files and job_description:
     # Valida a descrição da vaga
     st.write("Validando a descrição da vaga...")
-    job_validation = ai.validate_job_description(job_description)
-
     
+    with st.spinner("Aguarde, validando..."):
+        job_validation = ai.validate_job_description(job_description)
+
     if job_validation == "Descrição de vaga inválida":
         st.warning("⚠️ Descrição de vaga inválida. Por favor, insira uma descrição válida.")
     else:
@@ -37,9 +38,10 @@ if uploaded_files and job_description:
                 content = read_uploaded_file(uploaded_file)
 
                 # Gera resumo, opinião e score do currículo
-                resum = ai.resume_cv(content)
-                opinion = ai.generate_opinion(content, job_description)
-                score = ai.generate_score(content, job_description)
+                with st.spinner(f"Aguarde, analisando curriculo {uploaded_file.name}..."):
+                    resum = ai.resume_cv(content)
+                    opinion = ai.generate_opinion(content, job_description)
+                    score = ai.generate_score(content, job_description)
 
                 # Salva os dados processados no banco de dados
                 resum_schema = Resum(
