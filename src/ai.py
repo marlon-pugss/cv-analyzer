@@ -1,12 +1,11 @@
 import re
-import os  # Importado para carregar a chave de API
+import os
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
-import json  # Importando json para manipulação de dados
+import json
 
 # Carregar as variáveis de ambiente do arquivo .env
 load_dotenv()
-
 class GroqClient:
     def __init__(self, model_id="llama-3.1-70b-versatile"):
         # Carregar a chave de API do ambiente
@@ -17,7 +16,7 @@ class GroqClient:
         # Inicializar o modelo de linguagem com o ID especificado
         self.model_id = model_id
         try:
-            self.client = ChatGroq(model=model_id, api_key=self.api_key)  # Passar a chave de API aqui
+            self.client = ChatGroq(model=model_id, api_key=self.api_key)
         except Exception as e:
             print(f"Erro ao inicializar o cliente Groq: {e}")
             raise
@@ -27,8 +26,34 @@ class GroqClient:
         response = self.client.invoke(prompt)
         return response.content
 
+    def validate_job_description(self, job_text):
+        """
+        Verifica se o texto fornecido é uma descrição de vaga válida.
+
+        Args:
+            job_text (str): O texto para verificar.
+
+        Returns:
+            str: Retorna o texto da vaga se for uma descrição válida,
+                 caso contrário, retorna "Descrição de vaga inválida".
+        """
+        prompt = f'''
+            Por favor, analise o texto abaixo e determine se ele representa uma descrição válida de vaga de emprego.
+            
+            **Texto da vaga para análise:**
+            {job_text}
+
+            Responda apenas com "Descrição de vaga válida" se o texto realmente for uma descrição de vaga.
+            Se o texto não corresponder a uma descrição de vaga de emprego, responda com "Descrição de vaga inválida".
+        '''
+
+        # Enviar o prompt ao modelo e receber a resposta
+        response = self.generate_response(prompt=prompt).strip()
+
+        # Verificar a resposta e retornar o texto apropriado
+        return job_text if response == "Descrição de vaga válida" else "Descrição de vaga inválida"
+
     def resume_cv(self, cv):
-        # Criar o prompt para gerar um resumo do currículo em Markdown
         prompt = f'''
             **Solicitação de Resumo de Currículo em Markdown:**
             
@@ -57,19 +82,15 @@ class GroqClient:
             idiomas aqui
             '''
         
-        # Gerar a resposta usando o modelo de linguagem
         result_raw = self.generate_response(prompt=prompt)
         
-        # Tentar extrair o conteúdo após o marcador ```markdown
         try:
             result = result_raw.split('```markdown')[1]
         except:
-            # Se não conseguir, retornar a resposta bruta
             result = result_raw
         return result
 
     def generate_score(self, cv, job, max_attempts=10):
-        # Criar o prompt para calcular a pontuação do currículo com base na vaga
         prompt = f'''
             **Objetivo:** Avaliar um currículo com base em uma vaga específica e calcular a pontuação final. A nota máxima é 10.0.
 
@@ -94,75 +115,35 @@ class GroqClient:
             ```
             Pontuação Final: x.x
             ```
-            
-            **Atenção:** Seja rigoroso ao atribuir as notas. A nota máxima é 10.0, e o output deve conter apenas "Pontuação Final: x.x".
         '''
         
-        # Tentar gerar a pontuação em múltiplas tentativas, caso necessário
         for attempt in range(max_attempts):
-            # Gerar a resposta usando o modelo de linguagem
             result_raw = self.generate_response(prompt=prompt)
-            
-            # Extrair a pontuação da resposta gerada
             score = self.extract_score_from_result(result_raw)
-        
-            # Se a pontuação foi extraída com sucesso, retornar a pontuação
             if score is not None:
                 return score
-            
-            # Se falhar, exibir mensagem de erro e tentar novamente
             print(f"Tentativa {attempt + 1} falhou. Tentando novamente...")
         
-        # Lançar um erro se não conseguir gerar a pontuação após várias tentativas
         raise ValueError("Não foi possível gerar a pontuação após várias tentativas.")
 
     def extract_score_from_result(self, result_raw):
-        """Extrair a pontuação final da resposta gerada."""
-        # Definir o padrão de regex para buscar a pontuação na resposta
         pattern = r"(?i)Pontuação Final[:\s]*([\d,.]+(?:/\d{1,2})?)"
-        
-        # Procurar pela pontuação na resposta
         match = re.search(pattern, result_raw)
         
         if match:
-            # Se encontrado, extrair o valor da pontuação
             score_str = match.group(1)
-            print(f"Valor de score_str: '{score_str}'")
-            
             if '/' in score_str:
                 score_str = score_str.split('/')[0]
-            
-            # Garantir que o valor é numérico e válido
-            score_str = score_str.strip()  # Remove espaços extras
-            
-            # Verifica se score_str é vazio ou contém apenas um ponto ou vírgula
+            score_str = score_str.strip()
             if score_str in ["", ".", ","]:
-                print("Pontuação inválida encontrada. Retornando None.")
-                return None  # Retorna None se for um valor inválido
-            
-            # Retornar a pontuação como um número float
+                return None
             return float(score_str.replace(',', '.'))
-
-        # Retornar None se não encontrar a pontuação
         return None
 
     def generate_opinion(self, cv, job):
-        """
-        Gera uma análise crítica do currículo em relação à descrição da vaga.
-
-        Args:
-            cv (str): O currículo do candidato.
-            job (str): A descrição da vaga.
-
-        Returns:
-            str: A análise crítica formatada.
-        """
-        
-        # Verificar se cv e job não estão vazios
         if not cv or not job:
             raise ValueError("O currículo e a descrição da vaga não podem ser vazios.")
         
-        # Criar o prompt para gerar uma opinião crítica sobre o currículo
         prompt = f'''
             Por favor, analise o currículo fornecido em relação à descrição da vaga aplicada e crie uma opinião ultra crítica e detalhada. A sua análise deve incluir os seguintes pontos:
             Você deve pensar como o recrutador chefe que está analisando e gerando uma opinião descritiva sobre o currículo do candidato que se candidatou para a vaga.
@@ -187,24 +168,13 @@ class GroqClient:
         '''
 
         try:
-            # Gerar a resposta usando o modelo de linguagem
             result_raw = self.generate_response(prompt=prompt)
             return result_raw
         except Exception as e:
-            # Tratar erros durante a chamada do modelo
             print(f"Erro ao gerar opinião: {e}")
             return "Erro ao gerar a análise. Tente novamente mais tarde."
 
     def extract_candidate_summary(self, cv):
-        """
-        Extrai um resumo breve das informações do candidato.
-
-        Args:
-            cv (str): O currículo do candidato.
-
-        Returns:
-            dict: Um dicionário com as informações do candidato.
-        """
         prompt = f'''
             **Solicitação de Extração de Informações do Candidato:**
 
@@ -226,38 +196,24 @@ class GroqClient:
                 "Localização": "localização do candidato"
             }}
             ```
-
-            **Atenção:** Não inclua explicações, apenas forneça as informações extraídas no formato JSON especificado acima.
         '''
-
         try:
-            # Gerar a resposta usando o modelo de linguagem
             result_raw = self.generate_response(prompt=prompt)
-            # Retornar a resposta processada
             return json.loads(result_raw)
         except json.JSONDecodeError:
             print("Erro ao decodificar o JSON da resposta.")
-            return None  # Retornar None se a resposta não puder ser decodificada
+            return None
         except Exception as e:
             print(f"Erro ao extrair informações do candidato: {e}")
             return None
 
     def classify_score(self, score):
-            """
-            Classifica a pontuação do currículo e fornece feedback humanizado.
-
-            Args:
-                score (float): A pontuação do currículo.
-
-            Returns:
-                str: Um feedback humanizado sobre a pontuação.
-            """
-            if score < 7:
-                return "A pontuação está abaixo do ideal. Considere revisar o currículo para destacar suas experiências e habilidades. Cada detalhe conta!"
-            elif 7 <= score < 9:
-                return "Bom trabalho! Sua pontuação é aceitável, mas há espaço para melhorias. Revise seu currículo e veja onde pode destacar ainda mais suas experiências e habilidades."
-            else:  # score >= 9
-                return "Excelente! Sua pontuação é impressionante. Você está no caminho certo e deve continuar assim. Boa sorte na sua busca pela vaga!"
+        if score < 7:
+            return "A pontuação está abaixo do ideal. Considere revisar o currículo para destacar suas experiências e habilidades. Cada detalhe conta!"
+        elif 7 <= score < 9:
+            return "Bom trabalho! Sua pontuação é aceitável, mas há espaço para melhorias. Revise seu currículo e veja onde pode destacar ainda mais suas experiências e habilidades."
+        else:
+            return "Excelente! Sua pontuação é impressionante. Você está no caminho certo e deve continuar assim. Boa sorte na sua busca pela vaga!"
 
     def test_connection(self):
         try:
@@ -265,8 +221,3 @@ class GroqClient:
             print("Conexão bem-sucedida:", response)
         except Exception as e:
             print("Falha na conexão:", e)
-
-# Exemplo de uso:
-if __name__ == "__main__":
-    client = GroqClient()
-    # Aqui você pode testar outros métodos conforme necessário
