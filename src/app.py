@@ -5,29 +5,10 @@ from database import AnalyzeDatabase
 from ai import GroqClient
 from models.resum import Resum
 from models.file import File
-from fpdf import FPDF  # Importando a biblioteca para gerar PDF
 
 # Inicializando o banco de dados e o cliente AI
 database = AnalyzeDatabase()
 ai = GroqClient()
-
-# Função para gerar PDF
-def generate_pdf(suggestions, filename):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
-    
-    # Adiciona um título
-    pdf.cell(200, 10, txt="Sugestões de Melhorias para o Currículo", ln=True, align='C')
-
-    # Adiciona as sugestões ao PDF
-    for suggestion in suggestions:
-        pdf.cell(200, 10, txt=suggestion, ln=True)
-
-    # Salva o PDF
-    pdf_file_path = f"./{filename}.pdf"
-    pdf.output(pdf_file_path)
-    return pdf_file_path
 
 # Permitir o upload de múltiplos arquivos PDF
 uploaded_files = st.file_uploader("Carregue seus currículos", type=["pdf"], accept_multiple_files=True)
@@ -52,16 +33,10 @@ if uploaded_files and job_description:
             opinion = ai.generate_opinion(content, job_description)
             score = ai.generate_score(content, job_description)
 
-            # Classifica a pontuação e gera feedback humanizado
-            feedback = ai.classify_score(score)
-
-            # Gerar sugestões de melhoria
-            suggestions = ["Melhore a formatação", "Adicione experiências relevantes", "Revise as palavras-chave"]
-
             # Salva os dados processados no banco de dados
             resum_schema = Resum(
                 id=str(uuid.uuid4()),
-                job_id=job_description,
+                job_id=job_description,  # Caso você tenha um ID de trabalho correspondente
                 content=resum,
                 file=uploaded_file.name,
                 opinion=opinion
@@ -69,7 +44,7 @@ if uploaded_files and job_description:
 
             file_schema = File(
                 file_id=str(uuid.uuid4()),
-                job_id=job_description
+                job_id=job_description  # Caso você tenha um ID de trabalho correspondente
             )
 
             analyzis_schema = extract_data_analysis(resum, job_description, resum_schema.id, score)
@@ -86,9 +61,6 @@ if uploaded_files and job_description:
             st.markdown(opinion)
             st.write("### Pontuação:")
             st.write(f"Pontuação Final: {score}")
-            st.write("### Feedback:")
-            st.write(feedback)
-
 else:
     # Mensagem de aviso caso não haja arquivos ou descrição
     st.warning("⚠️ Nenhum currículo carregado ou descrição da vaga fornecida.")
