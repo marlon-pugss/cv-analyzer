@@ -19,7 +19,7 @@ job_description = st.text_area("Descrição da Vaga", placeholder="Insira aqui a
 # Verifica se currículos foram carregados e se a descrição da vaga foi fornecida
 if uploaded_files and job_description:
     # Valida a descrição da vaga
-    st.write("Validando a descrição da vaga...")
+    st.spinner("Validando a descrição da vaga...")
     
     with st.spinner("Aguarde, validando..."):
         job_validation = ai.validate_job_description(job_description)
